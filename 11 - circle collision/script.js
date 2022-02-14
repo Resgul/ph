@@ -128,11 +128,11 @@ class EnemyCircle {
 for (let i = 0; i < numberOfCircles; i++) {
   enemyCircles.push(new EnemyCircle);
 }
+myCircle.update();
 
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   myCircle.draw();
-  myCircle.update();
   myCircle.drawDistanceLine(enemyCircles);
   
   enemyCircles.forEach(circle => {

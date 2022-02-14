@@ -8,7 +8,9 @@
 }
 
 h1 {
-  color: darkgray
+  display: inline-block;
+  color: darkgray;
+  background: rgba(1, 14, 26, 0.596);
 }
 
 body {
