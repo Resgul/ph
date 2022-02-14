@@ -4,84 +4,143 @@ const ctx = canvas.getContext('2d');
 let frame = 0;
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const circle1 = {x: 60, y: 60, radius: 30};
-const circle2 = {x: canvas.width * 0.5, y: canvas.height * 0.5, radius: 100};
+const numberOfCircles = 15;
+const enemyCircles = [];
 
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 })
-animate();
 
-
-function moveCircle(obj) {
-  window.addEventListener('mousemove' , e => {
-    obj.x = e.x;
-    obj.y = e.y;
-  })
-}
-
-function checkCollision(circle1, circle2) {
-  let dx = circle1.x - circle2.x;
-  let dy = circle1.y - circle2.y;
-  let distance = Math.sqrt(dx * dx + dy * dy);
-  let sumOfRad = circle1.radius + circle2.radius;
-  
-  if (distance < sumOfRad) {
-    drawDistanceLine(circle1, circle2);
-    return true    
+class MyCircle {
+  constructor() {
+    this.x = 50;
+    this.y = 50;
+    this.radius = 40;
+    this.color = `rgb(2,101,68)`
   }
-  if (distance < sumOfRad * 2.5) drawDistanceLine(circle1, circle2)
-}
 
-function drawDistanceLine(circle1, circle2) {
-  let [x1, y1] = [circle1.x, circle1.y];
-  let [x2, y2] = [circle2.x, circle2.y];
-  let dx = circle1.x - circle2.x;
-  let dy = circle1.y - circle2.y;
-  let distance = Math.sqrt(dx * dx + dy * dy);
-  let sumOfRad = circle1.radius + circle2.radius;
-  
-  switch (true) {
-    case (distance >= sumOfRad * 2):
-      ctx.strokeStyle = 'green';
-      break;
-    case (sumOfRad <= distance && distance < sumOfRad * 2):
-      ctx.strokeStyle = 'orange';
-      break;
-    case (distance < sumOfRad):
-      ctx.strokeStyle = 'red';
-      break;
+  update() {
+    window.addEventListener('mousemove', e => {
+      this.x = e.x;
+      this.y = e.y;
+    })
   }
-  ctx.beginPath();
-  ctx.lineWidth = 2;
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  ctx.closePath();
+
+  drawDistanceLine(array) {
+    array.forEach(circle => {
+      let dx = this.x - circle.x;
+      let dy = this.y - circle.y;
+      let distance = Math.sqrt(dx * dx + dy * dy);
+      let sumOfRad = this.radius + circle.radius;
+      
+      if (distance < sumOfRad * 2.5) {
+        switch (true) {
+          case (distance >= sumOfRad * 2):
+            ctx.strokeStyle = 'green';
+            break;
+          case (sumOfRad <= distance && distance < sumOfRad * 2):
+            ctx.strokeStyle = 'orange';
+            break;
+          case (distance < sumOfRad):
+            ctx.strokeStyle = 'red';
+            break;
+        }
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(circle.x, circle.y);
+        ctx.stroke();
+        ctx.closePath();
+      }
+    })
+  }
+  
+  draw() {
+    ctx.beginPath();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = this.color;
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.closePath();
+  }
 }
 
-function drawCircle(obj) {
-  ctx.beginPath();
-  ctx.arc(obj.x, obj.y, obj.radius, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.closePath();
+let myCircle = new MyCircle(60, 60, 40);
+
+class EnemyCircle {
+  constructor() {
+    this.radius = Math.random() * 70 + 50;
+    this.x = (canvas.width - this.radius * 2) * Math.random() + this.radius;
+    this.y = (canvas.height - this.radius * 2) * Math.random() + this.radius;
+    this.color = 'darkgray';
+  }
+
+  collisionDetect(circle) {
+    let dx = this.x - circle.x;
+    let dy = this.y - circle.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    let sumOfRad = this.radius + circle.radius;
+    
+    if (distance < sumOfRad * 2.5) {
+      switch (true) {
+        case (distance >= sumOfRad * 2):
+          ctx.strokeStyle = 'green';
+          ctx.stroke();
+          break;
+        case (sumOfRad <= distance && distance < sumOfRad * 2):
+          ctx.strokeStyle = 'orange';
+          ctx.stroke();
+          break;
+        case (distance < sumOfRad):
+          ctx.strokeStyle = 'red';
+          ctx.stroke();
+          this.x += dx*0.05;
+          this.y += dy*0.05;
+          break;
+      }
+    }
+  }
+
+  collisionsNormalize() {
+    enemyCircles.forEach(circle => {
+      let dx = this.x - circle.x;
+      let dy = this.y - circle.y;
+      let distance = Math.sqrt(dx * dx + dy * dy);
+      let sumOfRad = this.radius + circle.radius;
+      if (distance < sumOfRad) {
+        this.x += dx*0.01;
+        this.y += dy*0.01;
+      }
+    })
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.strokeStyle = this.color;
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.lineWidth = 10;
+    ctx.stroke();
+    ctx.closePath();
+  }
+}
+
+for (let i = 0; i < numberOfCircles; i++) {
+  enemyCircles.push(new EnemyCircle);
 }
 
 function animate() {
-  if (frame % 2 === 0) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawCircle(circle1);
-    drawCircle(circle2);
-    checkCollision(circle1, circle2)
-    moveCircle(circle1)
-    if (checkCollision(circle1, circle2)) {
-      ctx.lineWidth = 5;
-    } else {
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = 'black'
-    }
-  }
-  frame++;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  myCircle.draw();
+  myCircle.update();
+  myCircle.drawDistanceLine(enemyCircles);
+  
+  enemyCircles.forEach(circle => {
+    circle.draw();
+    circle.collisionDetect(myCircle);
+    circle.collisionsNormalize();
+  })
+
   requestAnimationFrame(animate);
 }
+animate();

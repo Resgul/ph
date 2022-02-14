@@ -7,7 +7,12 @@
   z-index: -1;
 }
 
+h1 {
+  color: darkgray
+}
+
 body {
+  background: rgb(1, 14, 26);
   text-align: center;
 }
 
