@@ -1,12 +1,11 @@
-/* body {
+body {
   background: linear-gradient(to bottom, red, green, blue);
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-} */
+}
 
 canvas {
-  /* background: blue; */
   position: absolute;
   top: 0;
   left: 0;
@@ -15,5 +14,5 @@ canvas {
 }
 
 #collisionCanvas {
-  background-color: transparent;
+  opacity: 0;
 }
