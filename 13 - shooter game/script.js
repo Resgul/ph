@@ -7,7 +7,9 @@ const collisionCanvas = document.getElementById('collisionCanvas');
 const collisionCtx = collisionCanvas.getContext('2d');
 collisionCanvas.width = window.innerWidth;
 collisionCanvas.height = window.innerHeight;
+
 let score = 0;
+let gameOver = false;
 ctx.font = '50px Impact'
 
 window.addEventListener('resize', () => {
@@ -40,6 +42,7 @@ class Raven {
     this.flapInterval = Math.random() * 50 + 30;
     this.randomColor = [Math.floor(Math.random()*255), Math.floor(Math.random()*255), Math.floor(Math.random()*255)];
     this.color = `rgb( ${this.randomColor[0]}, ${this.randomColor[1]}, ${this.randomColor[2]})`;
+    this.hasTrail = Math.random() > 0.5;
   }
   update(deltatime) {
     if (this.y < 0 || this.y > canvas.height - this.height) this.directionY *= -1;
@@ -51,7 +54,13 @@ class Raven {
       if (this.frame > this.maxFrame) this.frame = 0;
       else this.frame++;
       this.timeSinceFlap = 0;
+      if (this.hasTrail) {
+        for (let i = 0; i < 5; i++) {
+          particles.push(new Particle(this.x, this.y, this.width, this. color));
+        }
+      }
     }
+    if (this.x < 0 - this.width) gameOver = true;
   }
   draw() {
     collisionCtx.fillStyle = this.color;
@@ -91,11 +100,48 @@ class Explosion {
   }
 }
 
+let particles = [];
+
+class Particle {
+  constructor(x, y, size, color) {
+    this.size = size;
+    this.x = x + this.size * 0.5 + Math.random() * 50 - 25;
+    this.y = y + this.size * 0.33 + Math.random() * 50 - 25;
+    this.radius = Math.random() * this.size * 0.1;
+    this.maxRadius = Math.random() * 20 + 35;
+    this.markedForDeletion = false;
+    this.speedX = Math.random() * 1 + 0.5;
+    this.color = color;
+  }
+  update() {
+    this.x += this.speedX;
+    this.radius += 0.3;
+    if (this.radius > this.maxRadius - 5) this.markedForDeletion = true;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = 1 - this.radius / this.maxRadius;
+    ctx.beginPath();
+    ctx.fillStyle = this.color;
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 function drawScore() {
   ctx.fillStyle = 'black';
   ctx.fillText('Score: ' + score, 50, 75)
   ctx.fillStyle = 'white';
-  ctx.fillText('Score: ' + score, 53, 78)
+  ctx.fillText('Score: ' + score, 48, 73)
+}
+
+function drawGameOver() {
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'black';
+  ctx.fillText('GAME OVER, your score is ' + score, canvas.width * 0.5 + 2, canvas.height * 0.5 + 2)
+  ctx.fillStyle = 'white';
+  ctx.fillText('GAME OVER, your score is ' + score, canvas.width * 0.5, canvas.height * 0.5)
 }
 
 window.addEventListener('click', e => {
@@ -124,10 +170,12 @@ function animate(timestamp) {
     ravens.sort((a,b) => a.width - b.width);
   }
   drawScore();
-  [...ravens, ...explosions].forEach(object => object.update(deltatime));
-  [...ravens, ...explosions].forEach(object => object.draw());
+  [...particles, ...ravens, ...explosions].forEach(object => object.update(deltatime));
+  [...particles, ...ravens, ...explosions].forEach(object => object.draw());
   ravens = ravens.filter(object => !object.markedForDeletion);
   explosions = explosions.filter(object => !object.markedForDeletion);
-  requestAnimationFrame(animate)
+  particles = particles.filter(object => !object.markedForDeletion);
+  if (!gameOver) requestAnimationFrame(animate);
+  else drawGameOver();
 }
 animate(0);
