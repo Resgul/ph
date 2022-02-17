@@ -1,20 +1,21 @@
 /** @type {HTMLCanvasElement} */
 const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 const collisionCanvas = document.getElementById('collisionCanvas');
 const collisionCtx = collisionCanvas.getContext('2d');
-collisionCanvas.width = window.innerWidth;
-collisionCanvas.height = window.innerHeight;
+const backgroundCanvas = document.getElementById('backgroundCanvas');
+const backgroundCtx = backgroundCanvas.getContext('2d');
+backgroundCanvas.width = collisionCanvas.width = canvas.width = window.innerWidth;
+backgroundCanvas.height = collisionCanvas.height = canvas.height = window.innerHeight;
 
 let score = 0;
 let gameOver = false;
 ctx.font = '50px Impact'
 
+// ресайз окна
 window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  backgroundCanvas.width = collisionCanvas.width = canvas.width = window.innerWidth;
+  backgroundCanvas.height = collisionCanvas.height = canvas.height = window.innerHeight;
 })
 
 let ravens = [];
@@ -26,7 +27,7 @@ class Raven {
   constructor() {
     this.spriteWidth = 271;
     this.spriteHeight = 194;
-    this.sizeModifier = Math.random() * 0.6 + 0.4;
+    this.sizeModifier = (Math.random() * 0.6 + 0.4) * 0.5;
     this.width = this.spriteWidth * this.sizeModifier;
     this.height = this.spriteHeight * this.sizeModifier;
     this.x = canvas.width;
@@ -40,9 +41,9 @@ class Raven {
     this.maxFrame = 4;
     this.timeSinceFlap = 0;
     this.flapInterval = Math.random() * 50 + 30;
-    this.randomColor = [Math.floor(Math.random()*255), Math.floor(Math.random()*255), Math.floor(Math.random()*255)];
+    this.randomColor = [Math.floor(20 + Math.random()*30), Math.floor(150 + Math.random()*35), Math.floor(150 + Math.random()*75)];
     this.color = `rgb( ${this.randomColor[0]}, ${this.randomColor[1]}, ${this.randomColor[2]})`;
-    this.hasTrail = Math.random() > 0.5;
+    this.hasTrail = this.directionX > 6;
   }
   update(deltatime) {
     if (this.y < 0 || this.y > canvas.height - this.height) this.directionY *= -1;
@@ -55,7 +56,7 @@ class Raven {
       else this.frame++;
       this.timeSinceFlap = 0;
       if (this.hasTrail) {
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 2; i++) {
           particles.push(new Particle(this.x, this.y, this.width, this. color));
         }
       }
@@ -143,7 +144,7 @@ function drawGameOver() {
   ctx.fillStyle = 'white';
   ctx.fillText('GAME OVER, your score is ' + score, canvas.width * 0.5, canvas.height * 0.5)
 }
-
+// обнаружение по цвету пикселя хитбокса
 window.addEventListener('click', e => {
   const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
   const pc = detectPixelColor.data;
@@ -153,25 +154,90 @@ window.addEventListener('click', e => {
       object.randomColor[2] === pc[2]) {
       object.markedForDeletion = true;
       score++;
+      if (object.hasTrail) score++; // за быстрых 2 очка+
       explosions.push(new Explosion(object.x, object.y, object.width));
     } 
   })
 });
 
+class Background {
+  constructor(src, speedModifier, isUpdateble) {
+    this.width = innerHeight * 1.8;
+    this.height = innerHeight * 1.05;
+    this.x = -200;
+    this.y = -5;
+    this.image = new Image();
+    this.image.src = src;
+    this.direction = 0;
+    this.middleOfScreenX = innerWidth * 0.5;
+    this.middleOfScreenY = innerHeight * 0.5;
+    this.speedModifier = speedModifier;
+    this.isUpdateble = isUpdateble;
+  }
+  update() {
+    if (this.isUpdateble) {
+      this.x += 0.3;
+    }
+    if (this.x > this.width) this.x = 0;
+  }
+  draw() {
+    backgroundCtx.drawImage(this.image, this.x + this.direction, this.y, this.width, this.height);
+    if (this.isUpdateble) {
+      backgroundCtx.drawImage(this.image, this.x - this.width  + this.direction, this.y, this.width, this.height);
+    } else {
+      backgroundCtx.drawImage(this.image, this.x + this.width  + this.direction, this.y, this.width, this.height);
+    }
+  }
+}
+
+const arrayOfLayerOptions = [
+  {src: 'images/layers/sky.png', speedModifier: 0, isUpdateble: false},
+  {src: 'images/layers/clouds_1.png', speedModifier: 0.015, isUpdateble: true},
+  {src: 'images/layers/rocks.png', speedModifier: 0.005, isUpdateble: false},
+  {src: 'images/layers/clouds_2.png', speedModifier: 0, isUpdateble: true},
+  {src: 'images/layers/ground_1.png', speedModifier: 0.01, isUpdateble: false},
+  {src: 'images/layers/ground_2.png', speedModifier: 0.03, isUpdateble: false},
+  {src: 'images/layers/ground_3.png', speedModifier: 0.10, isUpdateble: false},
+  {src: 'images/layers/plant.png', speedModifier: 0.18, isUpdateble: false},
+]
+let layersOfBackground = [];
+
+for (let layer of arrayOfLayerOptions) {
+  layersOfBackground.push(new Background(layer.src, layer.speedModifier, layer.isUpdateble))
+}
+
+window.addEventListener('mousemove', e => {
+  layersOfBackground.forEach(layer => {
+    if (!layer.isUpdateble) {
+      layer.x = (-e.x) * layer.speedModifier;
+      layer.y = (-e.y) * layer.speedModifier * 0.2;
+    }
+  })
+})
+
 function animate(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   collisionCtx.clearRect(0, 0, canvas.width, canvas.height);
+  backgroundCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // блок для запуска новых воронов с равной периодичностью внезавиимости от компа
   let deltatime = (timestamp - lastTime);
   lastTime = timestamp;
   timeToNextRaven += deltatime;
   if (timeToNextRaven > ravenInterval) {
     ravens.push(new Raven);
     timeToNextRaven = 0;
-    ravens.sort((a,b) => a.width - b.width);
+// сортировка массива по возрастанию, чтобы сначала отрисовывались маленькие, а затем большие наслаивались сверху
+    ravens.sort((a,b) => a.width - b.width); 
   }
+// конец блока
+
   drawScore();
-  [...particles, ...ravens, ...explosions].forEach(object => object.update(deltatime));
-  [...particles, ...ravens, ...explosions].forEach(object => object.draw());
+
+// спред оператор позволяет сократить дублирование кода, учитывая, что методы называются одинаково, можно запускать их из одного массива
+  [...particles, ...ravens, ...explosions, ...layersOfBackground].forEach(object => object.update(deltatime));
+  [...particles, ...ravens, ...explosions, ...layersOfBackground].forEach(object => object.draw());
+  // фильтр избавляется от объектов вылетевших за край окна
   ravens = ravens.filter(object => !object.markedForDeletion);
   explosions = explosions.filter(object => !object.markedForDeletion);
   particles = particles.filter(object => !object.markedForDeletion);
