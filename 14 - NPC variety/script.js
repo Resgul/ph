@@ -12,9 +12,9 @@ window.addEventListener('load', () => {
       this.width = width;
       this.height = height;
       this.enemies = [];
-      this.enemyInterval = 1000;
+      this.enemyInterval = 500;
       this.enemyTimer = 0;
-      this.enemyTypes = ['worm', 'ghost'];
+      this.enemyTypes = ['worm', 'ghost', 'spider'];
       this.#addNewEnemy();
     }
     update(deltaTime) {
@@ -35,6 +35,7 @@ window.addEventListener('load', () => {
       const randomEnemy = this.enemyTypes[Math.floor(Math.random() * this.enemyTypes.length)]
       if (randomEnemy === 'worm') this.enemies.push(new Worm(this));
       if (randomEnemy === 'ghost') this.enemies.push(new Ghost(this));
+      if (randomEnemy === 'spider') this.enemies.push(new Spider(this));
       // сортировка для отображениея нижних противников перед верхними
       // this.enemies.sort((enemy1, enemy2) => enemy1.y - enemy2.y )
     }
@@ -43,25 +44,24 @@ window.addEventListener('load', () => {
   class Enemy {
     constructor(game) {
       this.game = game;
-      this.x = this.game.width;
-      this.y = this.game.height * Math.random();
-      this.width = 100;
-      this.height = 100;
       this.markedForDeletion = false;
-      this.frame = 0;
+      this.frameX = 0;
+      this.maxFrame = 5;
+      this.frameInterval = 50;
+      this.frameTimer = 0;
     }
     update(deltaTime) {
       this.x -= this.vx * deltaTime;
       //remove enemies
       if (this.x < -this.width) this.markedForDeletion = true;
-      if (this.frame > 4) {
-        this.frame = 0
-      } else {
-        this.frame++;
-      };
+      if (this.frameTimer > this.frameInterval) {
+        this.frameTimer = 0;
+        if (this.frameX < this.maxFrame) this.frameX++ 
+        else this.frameX = 0;
+      } else this.frameTimer += deltaTime;
     }
     draw(ctx) {
-      ctx.drawImage(this.image, this.spriteWidth * this.frame, 0, this.spriteWidth, this.spriteHeight, this.x, this.y, this.width, this.height)
+      ctx.drawImage(this.image, this.spriteWidth * this.frameX, 0, this.spriteWidth, this.spriteHeight, this.x, this.y, this.width, this.height)
     }
   }
 
@@ -92,6 +92,49 @@ window.addEventListener('load', () => {
       this.image = new Image();
       this.image.src = 'images/enemy_ghost.png'
       this.vx = Math.random() * 0.2 + 0.1;
+      this.angle = 0;
+      this.curve = Math.random() * 3;
+    }
+    update(deltaTime) {
+      super.update(deltaTime);
+      this.y += Math.sin(this.angle) * this.curve;
+      this.angle += 0.04;
+    }
+    draw(ctx) {
+      ctx.save()
+      ctx.globalAlpha = 0.5
+      super.draw(ctx);
+      ctx.restore();
+    }
+  }
+
+  class Spider extends Enemy {
+    constructor(game) {
+      super(game);
+      this.spriteWidth = 310;
+      this.spriteHeight = 175;
+      this.width = this.spriteWidth * 0.5;
+      this.height = this.spriteHeight * 0.5;
+      this.x = (this.game.width - this.width) * Math.random();
+      this.y = 0 - this.height;
+      this.image = new Image();
+      this.image.src = 'images/enemy_spider.png';
+      this.vx = 0;
+      this.vy = Math.random() * 0.1 + 0.1;
+      this.maxLength = Math.random() * (this.game.height - this.height);
+    }
+    update(deltaTime) {
+      super.update(deltaTime);
+      if (this.y < 0 - this.height * 2) this.markedForDeletion = true;
+      this.y += this.vy * deltaTime;
+      if (this.y > this.maxLength) this.vy *= -1;
+    }
+    draw(ctx) {
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width * 0.5, 0);
+      ctx.lineTo(this.x + this.width * 0.5, this.y + 5);
+      ctx.stroke();
+      super.draw(ctx);
     }
   }
 
