@@ -20,7 +20,7 @@ window.addEventListener('resize', () => {
 
 let ravens = [];
 let timeToNextRaven = 0;
-let ravenInterval = 500;
+let ravenInterval = 2500;
 let lastTime = 0;
 
 class Raven {
@@ -144,7 +144,7 @@ function drawGameOver() {
   ctx.fillStyle = 'white';
   ctx.fillText('GAME OVER, your score is ' + score, canvas.width * 0.5, canvas.height * 0.5)
 }
-// обнаружение по цвету пикселя хитбокса
+// обнаружение хитбокса по цвету пикселя 
 window.addEventListener('click', e => {
   const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
   const pc = detectPixelColor.data;

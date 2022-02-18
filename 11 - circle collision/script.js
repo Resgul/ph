@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 let frame = 0;
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const numberOfCircles = 50;
+const numberOfCircles = 20;
 const enemyCircles = [];
 
 window.addEventListener('resize', () => {
@@ -70,7 +70,7 @@ let myCircle = new MyCircle(60, 60, 40);
 
 class EnemyCircle {
   constructor() {
-    this.radius = Math.random() * 20 + 15;
+    this.radius = Math.random() * 20 + 55;
     this.x = (canvas.width - this.radius * 2) * Math.random() + this.radius;
     this.y = (canvas.height - this.radius * 2) * Math.random() + this.radius;
     this.color = 'darkgray';
