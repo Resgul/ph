@@ -6,6 +6,7 @@ canvas.width = 800;
 canvas.height = 720;
 let enemies = [];
 let score = 0;
+let gameOver = false;
 
 class InputHandler {
   constructor() {
@@ -53,7 +54,16 @@ class Player {
   draw(context) {
     context.drawImage(this.image, this.frameX * this.width, this.frameY * this.width,this.width, this.height, this.x, this.y, this.width, this.height);
   }
-  update(input, deltaTime) {
+  update(input, deltaTime, enemies) {
+    // collision detection
+    enemies.forEach(enemy => {
+      const dx = (this.x+this.width*0.5) - (enemy.x+enemy.width*0.5);
+      const dy = (this.y+this.width*0.5) - (enemy.y+enemy.width*0.5);
+      const distance = Math.sqrt(dx*dx + dy*dy);
+      if (distance < enemy.width * 0.5 + this.width * 0.5) {
+        gameOver = true;
+      }
+    })
     // sprite animation
     if (this.frameTimer >= this.frameInterval) {
       this.frameTimer = 0;
@@ -141,7 +151,10 @@ class Enemy {
       else this.frameX++;
     } else this.frameTimer += deltaTime
     this.x -= this.speed;
-    if (this.x < 0 - this.width) this.markForDeletion = true;
+    if (this.x < 0 - this.width) {
+      this.markForDeletion = true;
+      score++;
+    }
   }
 }
 
@@ -160,8 +173,19 @@ function handleEnemies(deltaTime) {
  enemies = enemies.filter(enemy => !enemy.markForDeletion);
 }
 
-function dispalyStatusText() {
-
+function dispalyStatusText(context) {
+  context.font = '40px Helvetica';
+  context.fillStyle = 'black';
+  context.fillText('Score: ' + score, 20, 50);
+  context.fillStyle = 'white';
+  context.fillText('Score: ' + score, 22, 52);
+  if (gameOver) {
+    context.textAlign = 'center';
+    context.fillStyle = 'black';
+    context.fillText('GAME OVER, try again ' + score, canvas.width*0.5, canvas.height*0.5);
+    context.fillStyle = 'white';
+    context.fillText('GAME OVER, try again ' + score, canvas.width*0.5 + 2, canvas.height*0.5 + 2);
+  }
 }
 
 const input = new InputHandler();
@@ -178,10 +202,11 @@ function animate(timeStamp) {
   lastTime = timeStamp;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   background.draw(ctx);
-  // background.update();
+  background.update();
   player.draw(ctx);
-  player.update(input, deltaTime);
+  player.update(input, deltaTime, enemies);
   handleEnemies(deltaTime);
-  requestAnimationFrame(animate);
+  dispalyStatusText(ctx);
+  if (!gameOver) requestAnimationFrame(animate);
 }
 animate(0);
