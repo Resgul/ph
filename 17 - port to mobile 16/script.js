@@ -2,7 +2,7 @@
 
 const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
-canvas.width = 800;  
+canvas.width = 1400;  
 canvas.height = 720;
 let enemies = [];
 let score = 0;
@@ -38,7 +38,7 @@ class Player {
     this.gameHeight = gameHeight;
     this.width = 200;
     this.height = 200;
-    this.x = 0;
+    this.x = 100;
     this.y = this.gameHeight - this.height;
     this.image = document.getElementById('playerImage');
     this.frameX = 0;
@@ -51,7 +51,15 @@ class Player {
     this.vy = 0;
     this.weight = 1;
   }
+  restart() {
+    this.x = 100;
+    this.y = this.gameHeight - this.height;
+  }
   draw(context) {
+    context.strokeStyle = 'blue';
+    context.beginPath();
+    context.arc(this.x+this.width*0.5, this.y+this.width*0.5, this.width/2, 0, Math.PI * 2);
+    context.stroke();
     context.drawImage(this.image, this.frameX * this.width, this.frameY * this.width,this.width, this.height, this.x, this.y, this.width, this.height);
   }
   update(input, deltaTime, enemies) {
@@ -186,6 +194,10 @@ function dispalyStatusText(context) {
     context.fillStyle = 'white';
     context.fillText('GAME OVER, try again ' + score, canvas.width*0.5 + 2, canvas.height*0.5 + 2);
   }
+}
+
+function restart() {
+
 }
 
 const input = new InputHandler();
