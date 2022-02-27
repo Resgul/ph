@@ -7,6 +7,7 @@ canvas.height = 720;
 let enemies = [];
 let score = 0;
 let gameOver = false;
+const fullScreenButton = document.getElementById('fullScreenButton');
 
 class InputHandler {
   constructor() {
@@ -78,19 +79,20 @@ class Player {
     this.frameY = 0;
   }
   draw(context) {
-    context.strokeStyle = 'blue';
+    context.lineWidth = 5;
+    context.strokeStyle = 'white';
     context.beginPath();
-    context.arc(this.x+this.width*0.5, this.y+this.width*0.5, this.width/2, 0, Math.PI * 2);
+    context.arc(this.x+this.width*0.5, this.y+this.width*0.5 + 20, this.width*0.33, 0, Math.PI * 2);
     context.stroke();
     context.drawImage(this.image, this.frameX * this.width, this.frameY * this.width,this.width, this.height, this.x, this.y, this.width, this.height);
   }
   update(input, deltaTime, enemies) {
     // collision detection
     enemies.forEach(enemy => {
-      const dx = (this.x+this.width*0.5) - (enemy.x+enemy.width*0.5);
-      const dy = (this.y+this.width*0.5) - (enemy.y+enemy.width*0.5);
+      const dx = (this.x+this.width*0.5) - (enemy.x+enemy.width*0.5 - 20);
+      const dy = (this.y+this.width*0.5 + 20) - (enemy.y+enemy.width*0.5);
       const distance = Math.sqrt(dx*dx + dy*dy);
-      if (distance < enemy.width * 0.5 + this.width * 0.5) {
+      if (distance < enemy.width * 0.33 + this.width * 0.33) {
         gameOver = true;
       }
     })
@@ -175,11 +177,12 @@ class Enemy {
     this.markForDeletion = false;
   }
   draw(context) {
-    context.strokeStyle = 'blue';
+    context.lineWidth = 5;
+    context.strokeStyle = 'white';
     context.beginPath();
-    context.arc(this.x+this.width*0.5, this.y+this.width*0.5, this.width/2, 0, Math.PI * 2);
-    context.stroke();
+    context.arc(this.x+this.width*0.5 - 20, this.y+this.width*0.5, this.width*0.33, 0, Math.PI * 2);
     context.drawImage(this.image, this.frameX * this.width, 0, this.width, this.height, this.x, this.y, this.width, this.height);
+    context.stroke();
   }
   update(deltaTime) {
     if (this.frameTimer >= this.frameInterval) {
@@ -234,6 +237,17 @@ function restartGame() {
   gameOver = false;
   animate(0);
 }
+
+function toggleFullScreen() {
+  console.log(document.fullscreenElement);
+  if (!document.fullscreenElement) {
+    canvas.requestFullscreen().catch(err => {
+      alert(`Error, can't enable full-screen mode: ${err.message}`)
+    })
+  }
+}
+fullScreenButton.addEventListener('click', toggleFullScreen);
+
 
 const input = new InputHandler();
 const player = new Player(canvas.width, canvas.height);
