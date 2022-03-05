@@ -70,7 +70,7 @@ class Player {
     this.frameInterval = 1000/this.fps;
     this.speed = 0;
     this.vy = 0;
-    this.weight = 1;
+    this.weight = .3;
   }
   restart() {
     this.x = 100;
@@ -109,7 +109,7 @@ class Player {
     } else if (input.keys.indexOf('ArrowLeft') > -1) {
       this.speed = -5;
     } else if ((input.keys.indexOf('ArrowUp') > -1 || input.keys.indexOf('swipe up')) > -1 && this.onGround()) {
-      this.vy = -32;
+      this.vy = -15;
     }
      else {
       this.speed = 0;
@@ -262,7 +262,7 @@ let randomEnemyInterval = Math.random() * 1000 + 500;
 
 function animate(timeStamp) {
   const deltaTime = timeStamp - lastTime;
-  lastTime = timeStamp;
+  lastTime = timeStamp;  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   background.draw(ctx);
   background.update();
