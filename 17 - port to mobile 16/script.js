@@ -79,11 +79,12 @@ class Player {
     this.frameY = 0;
   }
   draw(context) {
-    context.lineWidth = 5;
-    context.strokeStyle = 'white';
-    context.beginPath();
-    context.arc(this.x+this.width*0.5, this.y+this.width*0.5 + 20, this.width*0.33, 0, Math.PI * 2);
-    context.stroke();
+    // отобразить хитбокс player
+    // context.lineWidth = 5;
+    // context.strokeStyle = 'white';
+    // context.beginPath();
+    // context.arc(this.x+this.width*0.5, this.y+this.width*0.5 + 20, this.width*0.33, 0, Math.PI * 2);
+    // context.stroke();
     context.drawImage(this.image, this.frameX * this.width, this.frameY * this.width,this.width, this.height, this.x, this.y, this.width, this.height);
   }
   update(input, deltaTime, enemies) {
@@ -177,12 +178,13 @@ class Enemy {
     this.markForDeletion = false;
   }
   draw(context) {
-    context.lineWidth = 5;
-    context.strokeStyle = 'white';
-    context.beginPath();
-    context.arc(this.x+this.width*0.5 - 20, this.y+this.width*0.5, this.width*0.33, 0, Math.PI * 2);
+    // отобразить хитбокс Enemy
+    // context.lineWidth = 5;
+    // context.strokeStyle = 'white';
+    // context.beginPath();
+    // context.arc(this.x+this.width*0.5 - 20, this.y+this.width*0.5, this.width*0.33, 0, Math.PI * 2);
     context.drawImage(this.image, this.frameX * this.width, 0, this.width, this.height, this.x, this.y, this.width, this.height);
-    context.stroke();
+    // context.stroke();
   }
   update(deltaTime) {
     if (this.frameTimer >= this.frameInterval) {
