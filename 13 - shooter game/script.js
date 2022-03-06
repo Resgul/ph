@@ -5,35 +5,35 @@ const collisionCanvas = document.getElementById('collisionCanvas');
 const collisionCtx = collisionCanvas.getContext('2d');
 const backgroundCanvas = document.getElementById('backgroundCanvas');
 const backgroundCtx = backgroundCanvas.getContext('2d');
-backgroundCanvas.width = collisionCanvas.width = canvas.width = window.innerWidth;
-backgroundCanvas.height = collisionCanvas.height = canvas.height = window.innerHeight;
+function resizeCanvas() {
+  backgroundCanvas.width = collisionCanvas.width = canvas.width = window.innerWidth;
+  backgroundCanvas.height = collisionCanvas.height = canvas.height = window.innerHeight;
+}
+resizeCanvas();
 
 let score = 0;
 let gameOver = false;
 ctx.font = '50px Impact'
 
 // ресайз окна
-window.addEventListener('resize', () => {
-  backgroundCanvas.width = collisionCanvas.width = canvas.width = window.innerWidth;
-  backgroundCanvas.height = collisionCanvas.height = canvas.height = window.innerHeight;
-})
+window.addEventListener('resize', resizeCanvas)
 
 let ravens = [];
 let timeToNextRaven = 0;
-let ravenInterval = 2500;
+let ravenInterval = 500;
 let lastTime = 0;
 
 class Raven {
   constructor() {
     this.spriteWidth = 271;
     this.spriteHeight = 194;
-    this.sizeModifier = (Math.random() * 0.6 + 0.4) * 0.5;
+    this.sizeModifier = (Math.random() * 0.6 + 0.4);
     this.width = this.spriteWidth * this.sizeModifier;
     this.height = this.spriteHeight * this.sizeModifier;
     this.x = canvas.width;
     this.y = Math.random() * (canvas.height - this.height);
-    this.directionX = Math.random() * 5 + 3;
-    this.directionY = Math.random() * 5 - 2.5;
+    this.directionX = Math.random() * 4 + 3;
+    this.directionY = Math.random() * 4 - 2;
     this.markedForDeletion = false;
     this.image = new Image();
     this.image.src = 'images/raven.png';
@@ -43,7 +43,7 @@ class Raven {
     this.flapInterval = Math.random() * 50 + 30;
     this.randomColor = [Math.floor(20 + Math.random()*30), Math.floor(150 + Math.random()*35), Math.floor(150 + Math.random()*75)];
     this.color = `rgb( ${this.randomColor[0]}, ${this.randomColor[1]}, ${this.randomColor[2]})`;
-    this.hasTrail = this.directionX > 6;
+    this.hasTrail = this.directionX > 5;
   }
   update(deltatime) {
     if (this.y < 0 || this.y > canvas.height - this.height) this.directionY *= -1;
@@ -56,7 +56,7 @@ class Raven {
       else this.frame++;
       this.timeSinceFlap = 0;
       if (this.hasTrail) {
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 3; i++) {
           particles.push(new Particle(this.x, this.y, this.width, this. color));
         }
       }
@@ -130,36 +130,6 @@ class Particle {
   }
 }
 
-function drawScore() {
-  ctx.fillStyle = 'black';
-  ctx.fillText('Score: ' + score, 50, 75)
-  ctx.fillStyle = 'white';
-  ctx.fillText('Score: ' + score, 48, 73)
-}
-
-function drawGameOver() {
-  ctx.textAlign = 'center';
-  ctx.fillStyle = 'black';
-  ctx.fillText('GAME OVER, your score is ' + score, canvas.width * 0.5 + 2, canvas.height * 0.5 + 2)
-  ctx.fillStyle = 'white';
-  ctx.fillText('GAME OVER, your score is ' + score, canvas.width * 0.5, canvas.height * 0.5)
-}
-// обнаружение хитбокса по цвету пикселя 
-window.addEventListener('click', e => {
-  const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
-  const pc = detectPixelColor.data;
-  ravens.forEach(object => {
-    if (object.randomColor[0] === pc[0] && 
-      object.randomColor[1] === pc[1] && 
-      object.randomColor[2] === pc[2]) {
-      object.markedForDeletion = true;
-      score++;
-      if (object.hasTrail) score++; // за быстрых 2 очка+
-      explosions.push(new Explosion(object.x, object.y, object.width));
-    } 
-  })
-});
-
 class Background {
   constructor(src, speedModifier, isUpdateble) {
     this.width = innerHeight * 1.8;
@@ -206,6 +176,22 @@ for (let layer of arrayOfLayerOptions) {
   layersOfBackground.push(new Background(layer.src, layer.speedModifier, layer.isUpdateble))
 }
 
+// обнаружение хитбокса по цвету пикселя 
+window.addEventListener('click', e => {
+  const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
+  const pc = detectPixelColor.data;
+  ravens.forEach(object => {
+    if (object.randomColor[0] === pc[0] && 
+      object.randomColor[1] === pc[1] && 
+      object.randomColor[2] === pc[2]) {
+      object.markedForDeletion = true;
+      score++;
+      if (object.hasTrail) score++; // за быстрых 2 очка+
+      explosions.push(new Explosion(object.x, object.y, object.width));
+    } 
+  })
+});
+
 window.addEventListener('mousemove', e => {
   layersOfBackground.forEach(layer => {
     if (!layer.isUpdateble) {
@@ -214,6 +200,36 @@ window.addEventListener('mousemove', e => {
     }
   })
 })
+
+function drawScore() {
+  resizeCanvas();
+  ctx.font = '50px Impact';
+  ctx.fillStyle = 'black';
+  ctx.fillText('Score: ' + score, 50, 75)
+  ctx.fillStyle = 'white';
+  ctx.fillText('Score: ' + score, 48, 73)
+}
+
+function drawGameOver() {
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'black';
+  ctx.fillText(`GAME OVER, score: ${score}.`, canvas.width * 0.5 + 2, canvas.height * 0.5 + 2);
+  ctx.fillText(`ENTER to restart`, canvas.width * 0.5 + 2, canvas.height * 0.5 + 52);
+  ctx.fillStyle = 'white';
+  ctx.fillText(`GAME OVER, score: ${score}.`, canvas.width * 0.5, canvas.height * 0.5)
+  ctx.fillText(`ENTER to restart`, canvas.width * 0.5, canvas.height * 0.5 + 50)
+  document.addEventListener('keyup', restartGame)
+}
+
+function restartGame(e) {
+
+  if (e.key === 'Enter' && gameOver === true) {
+    score = 0;
+    gameOver = false;
+    ravens = [];
+    animate(0);
+  }
+}
 
 function animate(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
